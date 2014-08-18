@@ -48,8 +48,10 @@ extern u8 Buffer[32];
 extern bool StartToSendData;
 extern bool DataSendFinish;
 
-extern int flag;
-extern int level;
+extern int receive_flag;
+extern int receive_level;
+extern int receive_run;
+extern int send_flag;
 extern int Tim3_flg;
 
 /******************************************************************************/
@@ -186,13 +188,12 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
   */ 
 void TIM2_IRQHandler(void)
 {
-  if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) 	//
+  if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
 	{
-		GPIO_WriteBit(GPIOB, GPIO_Pin_6, (BitAction)((1-GPIO_ReadOutputDataBit(GPIOB,GPIO_Pin_6))));
-		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);  	//
-		//OS_ElapsedMilliseconds();					 	//
+		receive_run = 0;
+		send_flag = 1;
+		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
-    //SetSysTime(); 
 }
 
 /**
@@ -228,9 +229,9 @@ void TIM3_IRQHandler(void)   							//TIM3 interupt
 *******************************************************************************/
 void USARTx_IRQHandler(void)
 {
-	if(USART_GetITStatus(USARTx,USART_IT_RXNE) != RESET) //???? 
+	if(USART_GetITStatus(USARTx,USART_IT_RXNE) != RESET) 
 	{
-		USART_ClearITPendingBit(USARTx,USART_IT_RXNE); //??????
+		USART_ClearITPendingBit(USARTx,USART_IT_RXNE); 
 		RxBuffer[0] = USART_ReceiveData(USARTx);
 	}
 	USART_ClearITPendingBit(USARTx, USART_IT_RXNE);
@@ -246,15 +247,12 @@ void EXTI9_5_IRQHandler(void)
 	
   if(EXTI_GetITStatus(EXTI_LINE_KEY_BUTTON) != RESET)
   {
-		level = GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_7);
-		flag = 0;
+		receive_level = GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_7);
+		receive_flag = 0;
 		
     /* Clear the Key Button EXTI line pending bit */
     EXTI_ClearITPendingBit(EXTI_LINE_KEY_BUTTON);
   }
 }
 
-/**
-  * @}
-  */ 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

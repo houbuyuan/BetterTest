@@ -5,6 +5,11 @@
 #include "stm32f10x_it.h"
 #include "stm32Config.h"
 
+#define DEBUG 1
+
+#define LEVEL_LOW 0
+#define LEVEL_HIGHT 1
+
 typedef struct
 {
 	int HEADER_HIGH;
@@ -65,9 +70,14 @@ enum
 	STATUS_GROUP3_MEMBER4_2
 };
 
-void OS_ElapsedMilliseconds(void);
-u16 OS_GetElapsedMilliseconds(void);
-void DispLed(void);
-void SetSysTime(void);
+typedef struct
+{
+	int narrow_benchmark;
+	int narrow_benchmark_min;
+	int narrow_benchmark_max;
+	int wide_benchmark;
+	int wide_benchmark_min;
+	int wide_benchmark_max;
+} RFBenchmark_TypeDef;
 
 #endif

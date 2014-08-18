@@ -21,34 +21,18 @@ int fputc(int ch, FILE *f)
   return ch;
 }
 
-//u16 GetVolt(u16 advalue);
-
 bool StartToSendData = FALSE;
-u16 ElapsedMilliseconds=0;	   //system time counter,about every 1ms will add 1 
-//u8 Fled = 0;
-u8 hour = 0 ;
-u8 minute = 0;
-u8 second = 0;
-u16 millisecond = 0;
-//u8 keyValue=0;
-//extern u8 keyFlag;
-//extern u16 algstatus;
 
-extern uint8_t SensorArray_Data[3][12][64];
-uint8_t SendArray[3][12][64]={0};
-
-int flag = 1;
-int level = 0;
-u16 time1 = 0;
-u16 time2 = 0;
+int receive_flag = 1;
+int receive_level = 0;
+int receive_run = 1;
+int send_flag = 0;
+int status = 0;
+RFBenchmark_TypeDef benchmark;
+RFDataLenth_TypeDef dataLenth;
+int data_bit[24];
+int data_final[12];
 int Tim3_flg = 0;
-
-extern void Start_TakeMeasurement(void);
-extern void SetSlave_Download(void);
-extern void Transmit_TM_SCL(void);
-extern void Transmit_GetData(void);
-
-
 
 #define SOFT_MODEM_BAUD_RATE   (315)
 #define SOFT_MODEM_LOW_FREQ    (1575)
@@ -120,6 +104,243 @@ void loop_task()
 	}
 }
 
+void calculate_benchmark(int count)
+{
+	benchmark.narrow_benchmark = count;
+	benchmark.narrow_benchmark_min = benchmark.narrow_benchmark - (int)(benchmark.narrow_benchmark/6);
+	benchmark.narrow_benchmark_max = benchmark.narrow_benchmark + (int)(benchmark.narrow_benchmark/6);
+	benchmark.wide_benchmark = benchmark.narrow_benchmark * 3;	//narrow benchmark : wide benchmark = 1:3
+	benchmark.wide_benchmark_min = benchmark.wide_benchmark - (int)(benchmark.wide_benchmark/6);
+	benchmark.wide_benchmark_max = benchmark.wide_benchmark + (int)(benchmark.wide_benchmark/6);
+}
+
+void isNarrowOrWide(int count, int dataBit)
+{
+	if(count >= benchmark.narrow_benchmark_min || count <= benchmark.narrow_benchmark_max)
+	{
+		data_bit[dataBit] = 0;
+		status++;
+	}
+	else if(count >= benchmark.wide_benchmark_min || count <= benchmark.wide_benchmark_max)
+	{
+		data_bit[dataBit] = 1;
+		status++;
+	}
+	else
+	{
+		status = STATUS_HEADER_HIGH;
+		if(DEBUG) printf("%d Data no match, go to header matching.\r\n", dataBit);
+	}
+}
+
+int receiveData()
+{
+	uint16_t count = 0;
+	int run = 1;
+	int i,j, dataTmp;
+	
+	TIM_SetCounter(TIM2, 0);
+	status = STATUS_HEADER_HIGH;
+
+	while(receive_run)
+	{
+		if(DEBUG) printf("[Reciver]waiting interrupt.\r\n");
+		while(receive_flag);
+		
+		count = TIM_GetCounter(TIM2);
+		TIM_SetCounter(TIM2, 0);
+		receive_flag = 1;
+		if(DEBUG) printf("[Reciver]count: %d \r\n",count);
+		if(DEBUG) printf("[Reciver]level %d \r\n",receive_level);
+		if(DEBUG) printf("[Reciver]flag %d \r\n",receive_flag);
+		
+		switch(status)
+		{
+			case STATUS_HEADER_HIGH:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.HEADER_HIGH = count;
+				status++;
+				break;
+			case STATUS_HEADER_LOW:
+				if(receive_level == LEVEL_HIGHT)
+					break;
+				dataLenth.HEADER_LOW = count;
+				if((dataLenth.HEADER_LOW >= dataLenth.HEADER_HIGH * 30) 
+					|| (dataLenth.HEADER_LOW <= dataLenth.HEADER_HIGH * 32))	//HEADER_LOW : HEADER_HIGHT = 31:1
+				{
+					calculate_benchmark(dataLenth.HEADER_HIGH);
+					status++;
+					if(DEBUG) printf("[STATUS_HEADER_LOW]Header match.\r\n");
+				}
+				else
+				{
+					status = STATUS_HEADER_HIGH;
+					if(DEBUG) printf("[STATUS_HEADER_LOW]Header no match, go to header matching.\r\n");
+				}
+				break;
+			case STATUS_GROUP1_MEMBER1_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP1_MEMBER1_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP1_MEMBER1_1, 0);
+				break;
+			case STATUS_GROUP1_MEMBER1_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP1_MEMBER1_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP1_MEMBER1_2, 1);
+				break;
+			case STATUS_GROUP1_MEMBER2_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP1_MEMBER2_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP1_MEMBER2_1, 2);
+				break;
+			case STATUS_GROUP1_MEMBER2_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP1_MEMBER2_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP1_MEMBER2_2, 3);
+				break;
+			case STATUS_GROUP1_MEMBER3_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP1_MEMBER3_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP1_MEMBER3_1, 4);
+				break;
+			case STATUS_GROUP1_MEMBER3_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP1_MEMBER3_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP1_MEMBER3_2, 5);
+				break;
+			case STATUS_GROUP1_MEMBER4_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP1_MEMBER4_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP1_MEMBER4_1, 6);
+				break;
+			case STATUS_GROUP1_MEMBER4_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP1_MEMBER4_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP1_MEMBER4_2, 7);
+				break;
+			case STATUS_GROUP2_MEMBER1_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP2_MEMBER1_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP2_MEMBER1_1, 8);
+				break;
+			case STATUS_GROUP2_MEMBER1_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP2_MEMBER1_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP2_MEMBER1_2, 9);
+				break;
+			case STATUS_GROUP2_MEMBER2_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP2_MEMBER2_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP2_MEMBER2_1, 10);
+				break;
+			case STATUS_GROUP2_MEMBER2_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP2_MEMBER2_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP2_MEMBER2_2, 11);
+				break;
+			case STATUS_GROUP2_MEMBER3_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP2_MEMBER3_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP2_MEMBER3_1, 12);
+				break;
+			case STATUS_GROUP2_MEMBER3_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP2_MEMBER3_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP2_MEMBER3_2, 13);
+				break;
+			case STATUS_GROUP2_MEMBER4_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP2_MEMBER4_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP2_MEMBER4_1, 14);
+				break;
+			case STATUS_GROUP2_MEMBER4_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP2_MEMBER4_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP2_MEMBER4_2, 15);
+				break;
+			case STATUS_GROUP3_MEMBER1_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP3_MEMBER1_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP3_MEMBER1_1, 16);
+				break;
+			case STATUS_GROUP3_MEMBER1_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP3_MEMBER1_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP3_MEMBER1_2, 17);
+				break;
+			case STATUS_GROUP3_MEMBER2_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP3_MEMBER2_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP3_MEMBER2_1, 18);
+				break;
+			case STATUS_GROUP3_MEMBER2_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP3_MEMBER2_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP3_MEMBER2_2, 19);
+				break;
+			case STATUS_GROUP3_MEMBER3_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP3_MEMBER3_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP3_MEMBER3_1, 20);
+				break;
+			case STATUS_GROUP3_MEMBER3_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP3_MEMBER3_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP3_MEMBER3_2, 21);
+				break;
+			case STATUS_GROUP3_MEMBER4_1:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP3_MEMBER4_1 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP3_MEMBER4_1, 22);
+				break;
+			case STATUS_GROUP3_MEMBER4_2:
+				if(receive_level == LEVEL_LOW)
+					break;
+				dataLenth.DATA_GROUP3_MEMBER4_2 = count;
+				isNarrowOrWide(dataLenth.DATA_GROUP3_MEMBER4_2, 23);
+				if(status > STATUS_GROUP3_MEMBER4_2)
+				{
+					for(i = 0; i< 12; i++)
+					{
+						dataTmp = 0;
+						for(j = 0; j < 2; j++)
+						{
+							dataTmp = ((dataTmp << 1) + data_bit[i * 2 + j]);
+						}
+						data_final[i] = dataTmp;
+					}
+					receive_run = 0;
+				}
+				break;
+		}
+	}
+	if(DEBUG) printf("[Reciver]Done.\r\n");
+}
+
 /*******************************************************************************
 * Function Name  : main
 * Description    : the main function
@@ -129,103 +350,38 @@ void loop_task()
 *******************************************************************************/
 int main(void)
 {
-	uint16_t count = 0;
-	RFDataLenth_TypeDef dataLenth;
-	int status = 0;
 	
 	/********Config the Environment***********************/
 	SYSTEM_Configuration(); 
 	//delay_init(72);
-
 	SYSTEM_Init();
-	
-	printf("%s  \r\n"," start");
+	if(DEBUG) printf("Better Call boot successful.\r\n");
 	/****************main loop **********************************/
 	//delay_ms(100);
 	
-	TIM_SetCounter(TIM2, 0);
-	status = STATUS_HEADER_HIGH;
-	
 	while(1)
 	{
-		loop_task();
-		printf("%s  \r\n","waiting int");
+		send_flag = 0;
 		
-		while(flag)
+		//loop_task();
+		
+		receiveData();
+		if(DEBUG) printf("Better Call receive data done.\r\n");
+		if(DEBUG)
 		{
-			//GPIO_WriteBit(GPIOB, GPIO_Pin_6, (BitAction)((1-GPIO_ReadOutputDataBit(GPIOB,GPIO_Pin_6))));
+			printf("Better Call final data:%d%d%d%d %d%d%d%d %d%d%d%d\r\n",
+			data_final[0],data_final[1],data_final[2],data_final[3],
+			data_final[4],data_final[5],data_final[6],data_final[7],
+			data_final[8],data_final[9],data_final[10],data_final[11]);
 		}
 		
-		count = TIM_GetCounter(TIM2);
-		TIM_SetCounter(TIM2, 0);
+		if(DEBUG) printf("Better Call waiting for sending data.\r\n");
+		while(!send_flag);
 		
-		switch(status)
-		{
-			case STATUS_HEADER_HIGH:
-				
-				break;
-			case STATUS_HEADER_LOW:
-				
-				break;
-		}
-		
-		dataLenth.HEADER_HIGH = count;
-		
-		flag = 1;
-		
-
-		
-		printf("time %d  \r\n",time2);
-		printf("level %d  \r\n",level);
-		
-		
-		time1 = time2;
-		if(level == 1)  //high level
-		{
-
-		}
-		else if(level == 0) //low level
-		{
-
-		}
+		//send data
+		//data_final[12]
 		
 	}
 }
-
-/******************Get the system time***********************/
-u16 OS_GetElapsedMilliseconds(void)
-{
-   return ElapsedMilliseconds;			    //get system run time 
-}
-
-/******************System time add 1***********************/
-void OS_ElapsedMilliseconds(void)
-{
-    ElapsedMilliseconds++;	 				//system time ++
-}
-
-/*************Set system run time***********************/ 
-void SetSysTime()						    //set system run time 
-{
-	millisecond++;
-	if(millisecond == 1000)
-	{
-		millisecond = 0;
-		second++;	
-	}
-	if(second == 60)
-	{
-		second = 0;
-		minute ++;
-	}
-	if(minute == 60)
-	{
-		minute = 0;
-		hour ++;
-	}
-	if(hour == 24)
-	{hour = 0;}
-}
-
 
 /******************* (C) COPYRIGHT 2013 STMicroelectronics *****END OF FILE****/
