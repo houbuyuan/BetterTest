@@ -62,7 +62,38 @@ extern void Transmit_GetData(void);
 
 #define SOFT_MODEM_HIGH_CNT        (SOFT_MODEM_BIT_PERIOD/SOFT_MODEM_HIGH_USEC)
 #define SOFT_MODEM_LOW_CNT         (SOFT_MODEM_BIT_PERIOD/SOFT_MODEM_LOW_USEC)
+int 	PARITY_EVEN 	= 64;
+int 	PARITY_ODD 		= 32;
 
+int bitCount(int x) 
+{
+	int a = 255+(255<<8);
+	int b = a^(a<<8);
+	int c = b^(b<<4);
+	int d = c^(c<<2);
+	int e = d^(d<<1);
+	x = (x&e)+((x>>1)&e);
+	x = (x&d)+((x>>2)&d);
+	x = (x&c)+((x>>4)&c);
+	x = (x&b)+((x>>8)&b);
+	x = (x&a)+((x>>16)&a); 
+	return x;
+}
+int checkSum(int number)
+{
+		int counter = bitCount(number);
+		if (counter%2==0)
+			return PARITY_EVEN; //even
+		else
+			return PARITY_ODD; //odd
+	}
+	
+int createMessage(int number)
+{
+		int cSum = checkSum(number);
+		int message = number+cSum;
+		return message;
+}
 
 void toPhone_modulate(uint8_t b)
 {
@@ -94,7 +125,8 @@ void toPhone_modulate(uint8_t b)
 
 void toPhone_write(uint8_t data)
 {
-	int mask;
+	uint8_t mask;
+	data = createMessage(data);
 	toPhone_modulate(0);							 // Start Bit
 	for(mask = 1; mask; mask <<= 1){ // Data Bits
 		if(data & mask){
@@ -111,6 +143,7 @@ void toPhone_write(uint8_t data)
 void loop_task()
 {
 	int i;
+	TIM_Cmd(TIM3, ENABLE);
 	for (i = 0 ; i < 20 ; i++)
 	{
 		toPhone_write(i);
@@ -118,6 +151,7 @@ void loop_task()
 		TIM_SetCounter(TIM3, 50000);
 		while(!Tim3_flg);
 	}
+	TIM_Cmd(TIM3, DISABLE);
 }
 
 /*******************************************************************************

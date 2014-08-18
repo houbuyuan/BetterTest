@@ -341,6 +341,6 @@ void TIM3_Configuration(void)
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 	TIM_ClearFlag(TIM3, TIM_FLAG_Update); 						//清除溢出中断标志
 	TIM_ITConfig(TIM3,TIM_IT_Update,ENABLE);
-	TIM_Cmd(TIM3, ENABLE); 									//开启时钟
+	//TIM_Cmd(TIM3, ENABLE); 									//开启时钟
 }
 
