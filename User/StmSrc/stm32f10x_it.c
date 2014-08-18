@@ -50,6 +50,7 @@ extern bool DataSendFinish;
 
 extern int flag;
 extern int level;
+extern int Tim3_flg;
 
 /******************************************************************************/
 /*            Cortex-M3 Processor Exceptions Handlers                         */
@@ -203,6 +204,7 @@ void TIM3_IRQHandler(void)   							//TIM3 interupt
 {
   if(TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)		//check if the TIM3 interupt occur: TIM interupt source
 	{
+		Tim3_flg = 1;
 		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);     //clear TIMx interupt bit: TIM interupt source 
 	}
   

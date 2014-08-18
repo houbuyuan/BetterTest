@@ -41,11 +41,85 @@ int flag = 1;
 int level = 0;
 u16 time1 = 0;
 u16 time2 = 0;
+int Tim3_flg = 0;
 
 extern void Start_TakeMeasurement(void);
 extern void SetSlave_Download(void);
 extern void Transmit_TM_SCL(void);
 extern void Transmit_GetData(void);
+
+
+
+#define SOFT_MODEM_BAUD_RATE   (315)
+#define SOFT_MODEM_LOW_FREQ    (1575)
+#define SOFT_MODEM_HIGH_FREQ   (3150)
+
+#define TIM_PER_SEC		1000000
+
+#define SOFT_MODEM_BIT_PERIOD      (TIM_PER_SEC/SOFT_MODEM_BAUD_RATE)
+#define SOFT_MODEM_HIGH_USEC       (TIM_PER_SEC/SOFT_MODEM_HIGH_FREQ)
+#define SOFT_MODEM_LOW_USEC        (TIM_PER_SEC/SOFT_MODEM_LOW_FREQ)
+
+#define SOFT_MODEM_HIGH_CNT        (SOFT_MODEM_BIT_PERIOD/SOFT_MODEM_HIGH_USEC)
+#define SOFT_MODEM_LOW_CNT         (SOFT_MODEM_BIT_PERIOD/SOFT_MODEM_LOW_USEC)
+
+
+void toPhone_modulate(uint8_t b)
+{
+	volatile int tcnt,cnt;
+	if(b){
+		cnt = SOFT_MODEM_HIGH_CNT;
+		tcnt = SOFT_MODEM_HIGH_USEC / 2;
+	}else{
+		cnt = SOFT_MODEM_LOW_CNT;
+		tcnt = SOFT_MODEM_LOW_USEC / 2;
+	}
+	do {
+		cnt--;
+		{
+			Tim3_flg = 0;
+			TIM_SetCounter(TIM3, tcnt);
+			while(!Tim3_flg);
+		}
+		GPIO_WriteBit(GPIOB, GPIO_Pin_5, (BitAction)((1-GPIO_ReadOutputDataBit(GPIOB,GPIO_Pin_5))));
+		{
+			Tim3_flg = 0;
+			TIM_SetCounter(TIM3, tcnt);
+			while(!Tim3_flg);
+		}
+		GPIO_WriteBit(GPIOB, GPIO_Pin_5, (BitAction)((1-GPIO_ReadOutputDataBit(GPIOB,GPIO_Pin_5))));
+	} while (cnt);
+	GPIO_WriteBit(GPIOB, GPIO_Pin_5,1);
+}
+
+void toPhone_write(uint8_t data)
+{
+	int mask;
+	toPhone_modulate(0);							 // Start Bit
+	for(mask = 1; mask; mask <<= 1){ // Data Bits
+		if(data & mask){
+			toPhone_modulate(1);
+		}
+		else{
+			toPhone_modulate(0);
+		}
+	}
+	toPhone_modulate(1);				// Stop Bit
+	toPhone_modulate(1);				// Push Bit
+}
+
+void loop_task()
+{
+	int i;
+	for (i = 0 ; i < 20 ; i++)
+	{
+		toPhone_write(i);
+		Tim3_flg = 0;
+		TIM_SetCounter(TIM3, 50000);
+		while(!Tim3_flg);
+	}
+}
+
 /*******************************************************************************
 * Function Name  : main
 * Description    : the main function
@@ -74,6 +148,7 @@ int main(void)
 	
 	while(1)
 	{
+		loop_task();
 		printf("%s  \r\n","waiting int");
 		
 		while(flag)

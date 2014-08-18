@@ -33,7 +33,7 @@ void SYSTEM_Configuration(void)
 
  	TIM2_Configuration();
 
-// 	TIM3_Configuration();
+  TIM3_Configuration();
 }
 
 void SYSTEM_Init(void)
@@ -114,7 +114,7 @@ void NVIC_Configuration(void)
 
   /* Enable the EXTI9_5 Interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
@@ -133,13 +133,13 @@ void NVIC_Configuration(void)
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 
-//	///////////////Config TIM3///////////////////////////////////////
+	///////////////Config TIM3///////////////////////////////////////
 //	// NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);			//只能调用一次
-//	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn; 	//通道TIM3,
-//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;	//占优先级
-//	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 		//副优先级
-//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-//	NVIC_Init(&NVIC_InitStructure);
+	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn; 	//通道TIM3,
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;	//占优先级
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 		//副优先级
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
 	
 #endif /* FWLib 1.0 */
 }
@@ -260,7 +260,7 @@ void RCC_Configuration(void)
 		 | RCC_APB2Periph_GPIOC | USARTx_APB2_CLK | RCC_APB2Periph_AFIO, ENABLE);
 	RCC_AHBPeriphClockCmd(DMA1_AHB_CLK, ENABLE);
 	
- 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2,ENABLE); //使能TIM2&3和USART3模块时钟
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3,ENABLE); //使能TIM2&3和USART3模块时钟
 // 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3|RCC_APB1Periph_I2C1,ENABLE); //使能TIM2&3和USART3模块时钟
 }
 /*******************************************************************************
@@ -292,6 +292,12 @@ void GPIO_Configuration(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 	
+	/*********************toPhone_Tx***********************/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+
 	/*********************KEY****************************/
 	GPIO_InitStructure.GPIO_Pin  = KEY1_PIN | KEY2_PIN;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -314,7 +320,7 @@ void TIM2_Configuration(void)
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure ;
 
 	TIM_DeInit(TIM2);
-	TIM_TimeBaseStructure.TIM_Period=(5000 - 1);//65535;   		//自动重装载寄存器的值	1ms定时
+	TIM_TimeBaseStructure.TIM_Period=(5000 - 1);//65535;   		//自动重装载寄存器的值	50ms定时
 	TIM_TimeBaseStructure.TIM_Prescaler=(720 - 1);// 0;   		//时钟预分频数	 100kHZ
 	TIM_TimeBaseStructure.TIM_ClockDivision=TIM_CKD_DIV1; 		//采样分频
 	TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up;	//计数方式
@@ -328,10 +334,10 @@ void TIM3_Configuration(void)
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure ;
 
 	TIM_DeInit(TIM3);
-	TIM_TimeBaseStructure.TIM_Period=(200 - 1);//65535;    	//自动重装载寄存器的值	20ms定时
-	TIM_TimeBaseStructure.TIM_Prescaler=(7200 - 1);// 0;   	//时钟预分频数	10kHZ
+	TIM_TimeBaseStructure.TIM_Period=(1000 - 1);//65535;    	//自动重装载寄存器的值	1ms定时
+	TIM_TimeBaseStructure.TIM_Prescaler=(72 - 1);// 0;   	//时钟预分频数	1000kHZ
 	TIM_TimeBaseStructure.TIM_ClockDivision=TIM_CKD_DIV1; 		//采样分频
-	TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up;	//计数方式
+	TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Down;	//计数方式
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 	TIM_ClearFlag(TIM3, TIM_FLAG_Update); 						//清除溢出中断标志
 	TIM_ITConfig(TIM3,TIM_IT_Update,ENABLE);
