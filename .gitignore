@@ -23,8 +23,8 @@
 *.hex
 
 # output files
-Project\obj\*
-Project\listing\*
-Project\MagScanner_Master.uvopt
-Project\MagScanner_Master.uvgui.*
-Project\*.dep
+Project/obj
+Project/listing
+MagScanner_Master.uvopt
+MagScanner_Master.uvgui.*
+*.dep
