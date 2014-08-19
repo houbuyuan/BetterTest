@@ -23,6 +23,7 @@ int fputc(int ch, FILE *f)
 
 bool StartToSendData = FALSE;
 
+int count = 0;
 int receive_flag = 1;
 int receive_level = 0;
 int receive_run = 1;
@@ -116,12 +117,12 @@ void calculate_benchmark(int count)
 
 void isNarrowOrWide(int count, int dataBit)
 {
-	if(count >= benchmark.narrow_benchmark_min || count <= benchmark.narrow_benchmark_max)
+	if(count >= benchmark.narrow_benchmark_min && count <= benchmark.narrow_benchmark_max)
 	{
 		data_bit[dataBit] = 0;
 		status++;
 	}
-	else if(count >= benchmark.wide_benchmark_min || count <= benchmark.wide_benchmark_max)
+	else if(count >= benchmark.wide_benchmark_min && count <= benchmark.wide_benchmark_max)
 	{
 		data_bit[dataBit] = 1;
 		status++;
@@ -135,24 +136,18 @@ void isNarrowOrWide(int count, int dataBit)
 
 int receiveData()
 {
-	uint16_t count = 0;
 	int run = 1;
 	int i,j, dataTmp;
 	
 	TIM_SetCounter(TIM2, 0);
 	status = STATUS_HEADER_HIGH;
+	receive_run = 1;
+	receive_flag = 1;
 
 	while(receive_run)
 	{
-		if(DEBUG) printf("[Reciver]waiting interrupt.\r\n");
 		while(receive_flag);
-		
-		count = TIM_GetCounter(TIM2);
-		TIM_SetCounter(TIM2, 0);
 		receive_flag = 1;
-		if(DEBUG) printf("[Reciver]count: %d \r\n",count);
-		if(DEBUG) printf("[Reciver]level %d \r\n",receive_level);
-		if(DEBUG) printf("[Reciver]flag %d \r\n",receive_flag);
 		
 		switch(status)
 		{
@@ -167,16 +162,14 @@ int receiveData()
 					break;
 				dataLenth.HEADER_LOW = count;
 				if((dataLenth.HEADER_LOW >= dataLenth.HEADER_HIGH * 30) 
-					|| (dataLenth.HEADER_LOW <= dataLenth.HEADER_HIGH * 32))	//HEADER_LOW : HEADER_HIGHT = 31:1
+					&& (dataLenth.HEADER_LOW <= dataLenth.HEADER_HIGH * 32))	//HEADER_LOW : HEADER_HIGHT = 31:1
 				{
 					calculate_benchmark(dataLenth.HEADER_HIGH);
 					status++;
-					if(DEBUG) printf("[STATUS_HEADER_LOW]Header match.\r\n");
 				}
 				else
 				{
 					status = STATUS_HEADER_HIGH;
-					if(DEBUG) printf("[STATUS_HEADER_LOW]Header no match, go to header matching.\r\n");
 				}
 				break;
 			case STATUS_GROUP1_MEMBER1_1:
@@ -377,6 +370,7 @@ int main(void)
 		
 		if(DEBUG) printf("Better Call waiting for sending data.\r\n");
 		while(!send_flag);
+		if(DEBUG) printf("Better Call sent data.\r\n");
 		
 		//send data
 		//data_final[12]

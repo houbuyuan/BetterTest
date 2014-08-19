@@ -320,8 +320,8 @@ void TIM2_Configuration(void)
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure ;
 
 	TIM_DeInit(TIM2);
-	TIM_TimeBaseStructure.TIM_Period=(5000 - 1);//65535;   		//自动重装载寄存器的值	50ms定时
-	TIM_TimeBaseStructure.TIM_Prescaler=(720 - 1);// 0;   		//时钟预分频数	 100kHZ
+	TIM_TimeBaseStructure.TIM_Period=(50000 - 1);//65535;   		//自动重装载寄存器的值	50ms定时
+	TIM_TimeBaseStructure.TIM_Prescaler=(72 - 1);// 0;   		//时钟预分频数	 1000kHZ
 	TIM_TimeBaseStructure.TIM_ClockDivision=TIM_CKD_DIV1; 		//采样分频
 	TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up;	//计数方式
 	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);

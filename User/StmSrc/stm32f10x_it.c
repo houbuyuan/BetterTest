@@ -48,10 +48,12 @@ extern u8 Buffer[32];
 extern bool StartToSendData;
 extern bool DataSendFinish;
 
+extern int count;
 extern int receive_flag;
 extern int receive_level;
 extern int receive_run;
 extern int send_flag;
+extern int status;
 extern int Tim3_flg;
 
 /******************************************************************************/
@@ -190,8 +192,11 @@ void TIM2_IRQHandler(void)
 {
   if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
 	{
-		receive_run = 0;
-		send_flag = 1;
+		if(status > STATUS_GROUP3_MEMBER4_2)
+		{
+			receive_run = 0;
+			send_flag = 1;
+		}
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
 }
@@ -247,9 +252,13 @@ void EXTI9_5_IRQHandler(void)
 	
   if(EXTI_GetITStatus(EXTI_LINE_KEY_BUTTON) != RESET)
   {
-		receive_level = GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_7);
-		receive_flag = 0;
-		
+		count = TIM_GetCounter(TIM2);
+		TIM_SetCounter(TIM2, 0);
+		if(count > 100)
+		{
+			receive_level = !GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_7);
+			receive_flag = 0;
+		}
     /* Clear the Key Button EXTI line pending bit */
     EXTI_ClearITPendingBit(EXTI_LINE_KEY_BUTTON);
   }
