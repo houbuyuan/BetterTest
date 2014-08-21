@@ -28,12 +28,12 @@ void SYSTEM_Configuration(void)
 
 	/* Configure the GPIO ports */
 	UART_Configuration();
-	
+
 	EXTI_Configuration();
 
- 	TIM2_Configuration();
+	TIM2_Configuration();
 
-  TIM3_Configuration();
+	TIM3_Configuration();
 }
 
 void SYSTEM_Init(void)
@@ -58,7 +58,7 @@ void UART_Configuration(void)
 	USART_InitStructure.USART_CPHA = USART_CPHA_2Edge;
 	USART_InitStructure.USART_LastBit = USART_LastBit_Disable;
 #endif /* FWLib 1.0 */
-	
+
 	/* Configure the USARTx */
 	USART_Init(USARTx, &USART_InitStructure);
 
@@ -88,8 +88,8 @@ void NVIC_Configuration(void)
 	/* Set the Vector Table base location at 0x08000000 */
 	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x0);
 #endif
-	
-#if defined(FWLIB_1_0)	
+
+#if defined(FWLIB_1_0)
 	/* Enable the USART3 Interrupt */
 	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQChannel;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
@@ -104,28 +104,28 @@ void NVIC_Configuration(void)
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 
-//	///////////////Config TIM3///////////////////////////////////////
-//	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQChannel; 	//通道TIM3,
-//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;	//占优先级
-//	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 		//副优先级
-//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-//	NVIC_Init(&NVIC_InitStructure);
+	//	///////////////Config TIM3///////////////////////////////////////
+	//	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQChannel; 	//通道TIM3,
+	//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;	//占优先级
+	//	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 		//副优先级
+	//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	//	NVIC_Init(&NVIC_InitStructure);
 #elif defined(FWLIB_3_5)
 
-  /* Enable the EXTI9_5 Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-	
+	/* Enable the EXTI9_5 Interrupt */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
 	/* Enable the USART1 Interrupt */
 	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	
+
 	/////////////Config TIM2///////////////////////////////////////
 	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn; 	//通道TIM3,作为系统计时
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;	//占优先级
@@ -134,31 +134,31 @@ void NVIC_Configuration(void)
 	NVIC_Init(&NVIC_InitStructure);
 
 	///////////////Config TIM3///////////////////////////////////////
-//	// NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);			//只能调用一次
+	//	// NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);			//只能调用一次
 	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn; 	//通道TIM3,
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;	//占优先级
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; 		//副优先级
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	
+
 #endif /* FWLib 1.0 */
 }
 
 void EXTI_Configuration(void)
 {
 	EXTI_InitTypeDef EXTI_InitStructure;
-  /* Connect Key Button EXTI Line to Key Button GPIO Pin */
-  GPIO_EXTILineConfig(GPIO_PORT_SOURCE_KEY_BUTTON, GPIO_PIN_SOURCE_KEY_BUTTON);
+	/* Connect Key Button EXTI Line to Key Button GPIO Pin */
+	GPIO_EXTILineConfig(GPIO_PORT_SOURCE_KEY_BUTTON, GPIO_PIN_SOURCE_KEY_BUTTON);
 
-  /* Configure Key Button EXTI Line to generate an interrupt on falling edge */  
-  EXTI_InitStructure.EXTI_Line = EXTI_LINE_KEY_BUTTON;
-  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
-  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-  EXTI_Init(&EXTI_InitStructure);
+	/* Configure Key Button EXTI Line to generate an interrupt on falling edge */
+	EXTI_InitStructure.EXTI_Line = EXTI_LINE_KEY_BUTTON;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
 
-  /* Generate software interrupt: simulate a falling edge applied on Key Button EXTI line */
-  //EXTI_GenerateSWInterrupt(EXTI_LINE_KEY_BUTTON);
+	/* Generate software interrupt: simulate a falling edge applied on Key Button EXTI line */
+	//EXTI_GenerateSWInterrupt(EXTI_LINE_KEY_BUTTON);
 }
 
 /*******************************************************************************
@@ -179,16 +179,16 @@ void RCC_Configuration(void)
 	{
 	}
 	RCC_HCLKConfig(RCC_SYSCLK_Div1);//选择HCLK时钟源为系统时钟SYYSCLOCK
-	RCC_PCLK1Config(RCC_HCLK_Div2);//APB1时钟为2M 
+	RCC_PCLK1Config(RCC_HCLK_Div2);//APB1时钟为2M
 	RCC_PCLK2Config(RCC_HCLK_Div1);//APB2时钟为2M
-	
+
 	/* Flash 2 wait state */
 	FLASH_SetLatency(FLASH_Latency_2);
 	/* Enable Prefetch Buffer */
 	FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
-	
+
 	//设置 PLL 时钟源及倍频系数
-	RCC_PLLConfig(RCC_PLLSource_HSI_Div2, RCC_PLLMul_16);                
+	RCC_PLLConfig(RCC_PLLSource_HSI_Div2, RCC_PLLMul_16);
 	//使能或者失能 PLL,这个参数可以取：ENABLE或者DISABLE
 	RCC_PLLCmd(ENABLE);//如果PLL被用于系统时钟,那么它不能被失能
 	//等待指定的 RCC 标志位设置成功 等待PLL初始化成功
@@ -197,11 +197,11 @@ void RCC_Configuration(void)
 	}
 
 	//设置系统时钟（SYSCLK） 设置PLL为系统时钟源
-	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);  
+	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
 	//等待PLL成功用作于系统时钟的时钟源
-	//  0x00：HSI 作为系统时钟 
-	//  0x04：HSE作为系统时钟 
-	//  0x08：PLL作为系统时钟  
+	//  0x00：HSI 作为系统时钟
+	//  0x04：HSE作为系统时钟
+	//  0x08：PLL作为系统时钟
 	while(RCC_GetSYSCLKSource() != 0x08)
 	{
 	}
@@ -250,18 +250,22 @@ void RCC_Configuration(void)
 		{
 		}
 	}
-	#elif defined(FWLIB_3_5)						
+	#elif defined(FWLIB_3_5)
 	SystemInit();
 	#endif /* Internal Clock */
 #endif /* FWLib 1.0 */
-	
+
 	/* Enable GPIOA、GPIOB /TIM3 /I2C2/USART1 clocks */
 	RCC_APB2PeriphClockCmd(USARTx_GPIO_CLK | RCC_APB2Periph_GPIO_KEY_BUTTON
-		 | RCC_APB2Periph_GPIOC | USARTx_APB2_CLK | RCC_APB2Periph_AFIO, ENABLE);
+	| RCC_APB2Periph_GPIOC | USARTx_APB2_CLK | RCC_APB2Periph_AFIO, ENABLE);
 	RCC_AHBPeriphClockCmd(DMA1_AHB_CLK, ENABLE);
-	
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3,ENABLE); //使能TIM2&3和USART3模块时钟
-// 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3|RCC_APB1Periph_I2C1,ENABLE); //使能TIM2&3和USART3模块时钟
+
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3,ENABLE); //使能TIM2&3和USART3模块时钟
+	// 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2|RCC_APB1Periph_TIM3|RCC_APB1Periph_I2C1,ENABLE); //使能TIM2&3和USART3模块时钟
+	/* Enable SPI1 clock and GPIO clock for SPI1*/
+	RCC_APB2PeriphClockCmd(SPIa_GPIO_CLK | SPIa_CLK, ENABLE);
+
+
 }
 /*******************************************************************************
 * Function Name  : GPIO_Configuration
@@ -273,25 +277,25 @@ void RCC_Configuration(void)
 void GPIO_Configuration(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
-	
- 	/////////////////////////USART1/////////////////////////	
+
+	/////////////////////////USART1/////////////////////////
 	/* Configure USARTx Tx as alternate function push-pull */
 	GPIO_InitStructure.GPIO_Pin = USARTx_TxPin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_Init(USARTx_GPIO, &GPIO_InitStructure);
-	
- 	/* Configure USART1 Rx (PA10) as input floating */
- 	//GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
- 	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
- 	//GPIO_Init(GPIOA, &GPIO_InitStructure);	
+
+	/* Configure USART1 Rx (PA10) as input floating */
+	//GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+	//GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	//GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	/*********************TIMER_OUT***********************/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
-	
+
 	/*********************toPhone_Tx***********************/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -304,15 +308,29 @@ void GPIO_Configuration(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//上拉输入
 	GPIO_Init(KEY_GPIO, &GPIO_InitStructure);
 
-  /* Configure Key Button GPIO Pin as input floating (Key Button EXTI Line) */
-  GPIO_InitStructure.GPIO_Pin = GPIO_PIN_KEY_BUTTON;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-  GPIO_Init(GPIO_KEY_BUTTON, &GPIO_InitStructure);
-//	/////////////////////////Key/////////////////////////
-//	/*Configure PA0 as input for key*/				   //上拉输入
-//	GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_0;
-//	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-//	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	/* Configure SPIy pins: SCK, MISO and MOSI ---------------------------------*/
+	GPIO_InitStructure.GPIO_Pin = SPIa_PIN_SCK | SPIa_PIN_MOSI;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	/* Configure SCK and MOSI pins as Alternate Function Push Pull */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(SPIa_GPIO, &GPIO_InitStructure);
+	/* Configure MISO */
+	GPIO_InitStructure.GPIO_Pin = SPIa_PIN_MISO;
+	/* Configure MISO pin as Input Floating  */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(SPIa_GPIO, &GPIO_InitStructure);
+
+
+	/* Configure Key Button GPIO Pin as input floating (Key Button EXTI Line) */
+	GPIO_InitStructure.GPIO_Pin = GPIO_PIN_KEY_BUTTON;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIO_KEY_BUTTON, &GPIO_InitStructure);
+	//	/////////////////////////Key/////////////////////////
+	//	/*Configure PA0 as input for key*/				   //上拉输入
+	//	GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_0;
+	//	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	//	GPIO_Init(GPIOA, &GPIO_InitStructure);
 }
 
 void TIM2_Configuration(void)
