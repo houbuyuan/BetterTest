@@ -1,5 +1,5 @@
 #ifndef __STM32CONFIG_H
-#define __STM32CONFIG_H 
+#define __STM32CONFIG_H
 
 #define FWLIB_3_5			// or FWLIB_1_0 : File library version
 #define EXTERNAL_CLK		// or INTERNAL_CLK
@@ -24,6 +24,15 @@
 #define USARTx_IRQn								USART1_IRQn
 #define USARTx_IRQHandler					USART1_IRQHandler
 
+/**************************SPI*************************/
+#define SPIa                   SPI1
+#define SPIa_CLK               RCC_APB2Periph_SPI1
+#define SPIa_GPIO              GPIOA
+#define SPIa_GPIO_CLK          RCC_APB2Periph_GPIOA
+#define SPIa_PIN_SCK           GPIO_Pin_5
+#define SPIa_PIN_MISO          GPIO_Pin_6
+#define SPIa_PIN_MOSI          GPIO_Pin_7
+
 /****************************KEY**************************/
 #define KEY_GPIO              GPIOC
 #define KEY_GPIO_CLK					RCC_APB2Periph_GPIOC
@@ -32,7 +41,7 @@
 #define KEY1_PRESS()					(!GPIO_ReadInputDataBit(KEY_GPIO, KEY1_PIN))
 #define KEY2_PRESS()					(!GPIO_ReadInputDataBit(KEY_GPIO, KEY2_PIN))
 
-#define GPIO_LED                          GPIOC    
+#define GPIO_LED                          GPIOC
 #define RCC_APB2Periph_GPIO_LED           RCC_APB2Periph_GPIOC
 
 #define GPIO_KEY_BUTTON                   GPIOB

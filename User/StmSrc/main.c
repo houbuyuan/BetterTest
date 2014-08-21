@@ -120,7 +120,7 @@ void toPhone_modulate(uint8_t b)
 		}
 		GPIO_WriteBit(GPIOB, GPIO_Pin_5, (BitAction)((1-GPIO_ReadOutputDataBit(GPIOB,GPIO_Pin_5))));
 	} while (cnt);
-	GPIO_WriteBit(GPIOB, GPIO_Pin_5,1);
+	GPIO_WriteBit(GPIOB, GPIO_Pin_5,0);
 }
 
 void toPhone_write(uint8_t data)
